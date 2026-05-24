@@ -10,8 +10,8 @@ import (
 
 func main() {
 	// CLI flags
-	dbPath := flag.String("db", "streamlite.db", "Ruta al archivo de SQLite")
-	resetDB := flag.Bool("reset", false, "Borra la base de datos existente y aplica migraciones de cero")
+	dbPath := flag.String("db", "streamlite.db", "Path to the SQLite file")
+	resetDB := flag.Bool("reset", false, "Drop the existing database and re-run migrations from scratch")
 	flag.Parse()
 
 	// Initialize db with migrations.
@@ -33,14 +33,13 @@ func main() {
 
 type MediaResponse struct {
 	Title           string `json:"title"`
-	Day             int    `json:"day"`
+	Date            string `json:"date"`
 	ProgressSeconds int64  `json:"progress_seconds"`
 }
 
 
-// Los stubs de los handlers quedan iguales por ahora...
 func handleGetCatalog(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT title, day, progress_seconds FROM media ORDER BY updated_at DESC limit 10")
+	rows, err := database.DB.Query("SELECT title, date, progress_seconds FROM media ORDER BY updated_at DESC limit 10")
 	if err != nil {
 		http.Error(w, "Querying the db raised an error", http.StatusInternalServerError)
 		return
@@ -51,7 +50,7 @@ func handleGetCatalog(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var m MediaResponse
-		err := rows.Scan(&m.Title, &m.Day, &m.ProgressSeconds)
+		err := rows.Scan(&m.Title, &m.Date, &m.ProgressSeconds)
 		if err != nil {
 			log.Fatalf("Error while scanning %v", err)
 			http.Error(w, "Processing rows data raised an error.", http.StatusInternalServerError)
@@ -69,7 +68,7 @@ func handleGetCatalog(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(catalog); err != nil {
-		log.Printf("Error al codificar JSON: %v", err)
+		log.Printf("Error encoding JSON response: %v", err)
 	}
 
 

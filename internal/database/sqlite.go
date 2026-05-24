@@ -9,8 +9,6 @@ import (
 	_ "github.com/ncruces/go-sqlite3/driver"
 )
 
-// Embebe la carpeta de migraciones dentro del binario
-// 
 //go:embed migrations/*.sql
 
 var migrationFiles embed.FS

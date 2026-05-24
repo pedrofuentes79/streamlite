@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS media (
     id TEXT PRIMARY KEY,
-    day INTEGER NOT NULL,
+    date DATE NOT NULL,
     title TEXT NOT NULL,
     video_path TEXT NOT NULL,
     audio_path TEXT NOT NULL,
