@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"json"
+	"encoding/json"
 	"log"
 	"net/http"
 	"streamlite/internal/database"
@@ -48,7 +48,7 @@ func handleGetCatalog(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var catalog []MediaResponse
-	
+
 	for rows.Next() {
 		var m MediaResponse
 		err := rows.Scan(&m.Title, &m.Day, &m.ProgressSeconds)
@@ -67,11 +67,11 @@ func handleGetCatalog(w http.ResponseWriter, r *http.Request) {
 	// Set headers and return the struct
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	
+
 	if err := json.NewEncoder(w).Encode(catalog); err != nil {
 		log.Printf("Error al codificar JSON: %v", err)
 	}
-	
+
 
 }
 func handleStream(w http.ResponseWriter, r *http.Request)   {}
