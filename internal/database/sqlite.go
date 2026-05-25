@@ -10,38 +10,40 @@ import (
 )
 
 //go:embed migrations/*.sql
-
 var migrationFiles embed.FS
 
-var DB *sql.DB
-
-func InitDB(dbPath string, reset bool) {
+func InitDB(dbPath string, reset bool) *sql.DB {
 	if reset {
 		log.Println("Resetting full db")
 		os.Remove(dbPath)
 	}
-	var err error
-	DB, err = sql.Open("sqlite3", dbPath)
-	if err != nil {
-		log.Fatalf("Could not find sqlite3 file at %s with error %v", dbPath, err)
-	}
 
-	err = DB.Ping()
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
+		log.Fatalf("Could not open sqlite3 file at %s: %v", dbPath, err)
+	}
+	if err = db.Ping(); err != nil {
 		log.Fatalf("Could not reach DB: %v", err)
 	}
 
-	runMigrations()
+	runMigrations(db)
+	return db
 }
 
-func runMigrations() {
-	script, err := migrationFiles.ReadFile("migrations/1_init.sql")
+func runMigrations(db *sql.DB) {
+	entries, err := migrationFiles.ReadDir("migrations")
 	if err != nil {
-		log.Fatalf("Could not find migrations file.")
+		log.Fatalf("Could not read migrations directory: %v", err)
 	}
 
-	_, err = DB.Exec(string(script))
-	if err != nil {
-		log.Fatalf("Failed to execute migrations with: %v", err)
+	for _, entry := range entries {
+		script, err := migrationFiles.ReadFile("migrations/" + entry.Name())
+		if err != nil {
+			log.Fatalf("Could not read migration file %s: %v", entry.Name(), err)
+		}
+		if _, err = db.Exec(string(script)); err != nil {
+			log.Fatalf("Failed to execute migration %s: %v", entry.Name(), err)
+		}
+		log.Printf("Applied migration: %s", entry.Name())
 	}
 }
