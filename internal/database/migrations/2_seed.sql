@@ -24,4 +24,5 @@ VALUES
         'media_store/podcast_1.mp3',
         3600,   -- halfway
         7200.0  -- 2 hours
-    );
+    )
+    ;

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	sqlite3 "github.com/ncruces/go-sqlite3"
 )
@@ -19,9 +18,8 @@ func (s *server) handleProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, "The `id` parameter must be a valid integer", http.StatusBadRequest)
+	id, ok := parseMediaID(w, r)
+	if !ok {
 		return
 	}
 

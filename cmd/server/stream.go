@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 func (s *server) handleStream(w http.ResponseWriter, r *http.Request) {
@@ -14,17 +13,15 @@ func (s *server) handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "The `id` parameter must be a valid integer", http.StatusBadRequest)
+	id, ok := parseMediaID(w, r)
+	if !ok {
 		return
 	}
 
 	var videoPath string
-	err = s.db.QueryRow("SELECT video_path FROM media WHERE id = ?", id).Scan(&videoPath)
+	err := s.db.QueryRow("SELECT video_path FROM media WHERE id = ?", id).Scan(&videoPath)
 	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Media not found", http.StatusNotFound)
+		http.Error(w, "Media not found in database", http.StatusNotFound)
 		return
 	}
 	if err != nil {

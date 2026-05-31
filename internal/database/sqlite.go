@@ -44,6 +44,5 @@ func runMigrations(db *sql.DB) {
 		if _, err = db.Exec(string(script)); err != nil {
 			log.Fatalf("Failed to execute migration %s: %v", entry.Name(), err)
 		}
-		log.Printf("Applied migration: %s", entry.Name())
 	}
 }

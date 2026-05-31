@@ -1,0 +1,78 @@
+// Some tests
+// 1) Not found media
+// 2) Media is found on the DB but not on disk
+// 3) Happy path: what does this return? How do I inspect the payload to verify its correctness?
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"os"
+	"testing"
+	"path/filepath"
+	"strconv"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func Test_MediaNotFoundInDB(t *testing.T) {  
+	s := newTestServer(t)
+
+	testIdStr := "120"
+	body := strings.NewReader(`{"id": ` + testIdStr + `}`) // this id is not on the test DB
+	req := httptest.NewRequest(http.MethodGet, "/api/stream/" + testIdStr, body)
+	req.SetPathValue("id", testIdStr)
+	rec := httptest.NewRecorder()
+
+	s.handleStream(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Media not found in database")
+}
+
+func Test_MediaFoundInDB_ButNotOnDisk(t *testing.T) {  
+	s := newTestServer(t)
+
+	testIdStr := "1"
+	body := strings.NewReader(`{"id": ` + testIdStr + `}`) // this id is not on the test DB
+	req := httptest.NewRequest(http.MethodGet, "/api/stream/" + testIdStr, body)
+	req.SetPathValue("id", testIdStr)
+	rec := httptest.NewRecorder()
+
+	s.handleStream(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Media file not found on disk")
+}
+
+func Test_RENAME_ME(t *testing.T) {  
+	s := newTestServer(t)
+
+	// Add a fictitious row
+	d := t.TempDir()
+	videoPath := filepath.Join(d, "test.mp4")
+	audioPath := filepath.Join(d, "test.mp3")
+
+	// Write some bytes in the file
+	os.WriteFile(videoPath, []byte("test"), 0644)
+	
+	result, err := s.db.Exec(
+		`
+		INSERT INTO media 
+		(date, title, video_path, audio_path, total_seconds) 
+		VALUES (?, ?, ?, ?, ?)
+		`, "2026-06-01", "test", videoPath, audioPath, 120,
+	)
+	require.NoError(t, err) // query didn't fail
+	id, err := result.LastInsertId()
+	require.NoError(t, err) // query returns an id
+	
+	testIdStr := strconv.Itoa(int(id))
+	req := httptest.NewRequest(http.MethodGet, "/api/stream/" + testIdStr, nil)
+	req.SetPathValue("id", testIdStr)
+	rec := httptest.NewRecorder()	
+	
+	s.handleStream(rec, req)
+	
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
