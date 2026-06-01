@@ -45,7 +45,7 @@ func Test_MediaFoundInDB_ButNotOnDisk(t *testing.T) {
 	assert.Contains(t, rec.Body.String(), "Media file not found on disk")
 }
 
-func Test_RENAME_ME(t *testing.T) {  
+func Test_FullFileRequestHappyPath(t *testing.T) {  
 	s := newTestServer(t)
 
 	// Add a fictitious row
@@ -75,4 +75,47 @@ func Test_RENAME_ME(t *testing.T) {
 	s.handleStream(rec, req)
 	
 	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// Assert that the bytes are correct
+	expected := []byte("test")
+	got := rec.Body.Bytes()
+	assert.Equal(t, expected, got)
+}
+
+func Test_RangeRequestHappyPath(t *testing.T) {
+	s := newTestServer(t)
+
+	// Add a fictitious row
+	d := t.TempDir()
+	videoPath := filepath.Join(d, "test.mp4")
+	audioPath := filepath.Join(d, "test.mp3")
+
+	// Write some bytes in the file
+	os.WriteFile(videoPath, []byte("test-file"), 0644)
+	
+	result, err := s.db.Exec(
+		`
+		INSERT INTO media 
+		(date, title, video_path, audio_path, total_seconds) 
+		VALUES (?, ?, ?, ?, ?)
+		`, "2026-06-01", "test", videoPath, audioPath, 120,
+	)
+	require.NoError(t, err) // query didn't fail
+	id, err := result.LastInsertId()
+	require.NoError(t, err) // query returns an id
+	
+	testIdStr := strconv.Itoa(int(id))
+	req := httptest.NewRequest(http.MethodGet, "/api/stream/" + testIdStr, nil)
+	req.SetPathValue("id", testIdStr)
+	req.Header.Set("Range", "bytes=0-5")
+	rec := httptest.NewRecorder()	
+	
+	s.handleStream(rec, req)
+	
+	assert.Equal(t, http.StatusPartialContent, rec.Code)
+
+	// Assert that the bytes are correct
+	expected := []byte("test-f")
+	got := rec.Body.Bytes()
+	assert.Equal(t, expected, got)
 }
