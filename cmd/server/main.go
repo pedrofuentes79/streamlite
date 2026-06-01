@@ -24,6 +24,7 @@ func main() {
 
 	http.HandleFunc("/api/media", s.handleGetCatalog)
 	http.HandleFunc("/api/stream/{id}", s.handleStream)
+	http.HandleFunc("/api/audio/{id}", s.handleAudio)
 	http.HandleFunc("/api/progress/{id}", s.handleProgress)
 
 	log.Println("streamlite running at http://localhost:8080")

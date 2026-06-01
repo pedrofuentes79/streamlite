@@ -82,6 +82,38 @@ func Test_FullFileRequestHappyPath(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
+func Test_AudioServesAudioColumn(t *testing.T) {
+	s := newTestServer(t)
+
+	// Distinct contents per column so we can prove handleAudio reads audio_path.
+	d := t.TempDir()
+	videoPath := filepath.Join(d, "test.mp4")
+	audioPath := filepath.Join(d, "test.m4a")
+	os.WriteFile(videoPath, []byte("video-bytes"), 0644)
+	os.WriteFile(audioPath, []byte("audio-bytes"), 0644)
+
+	result, err := s.db.Exec(
+		`
+		INSERT INTO media
+		(date, title, video_path, audio_path, total_seconds)
+		VALUES (?, ?, ?, ?, ?)
+		`, "2026-06-01", "test", videoPath, audioPath, 120,
+	)
+	require.NoError(t, err)
+	id, err := result.LastInsertId()
+	require.NoError(t, err)
+
+	testIdStr := strconv.Itoa(int(id))
+	req := httptest.NewRequest(http.MethodGet, "/api/audio/"+testIdStr, nil)
+	req.SetPathValue("id", testIdStr)
+	rec := httptest.NewRecorder()
+
+	s.handleAudio(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, []byte("audio-bytes"), rec.Body.Bytes())
+}
+
 func Test_RangeRequestHappyPath(t *testing.T) {
 	s := newTestServer(t)
 

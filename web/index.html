@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover lets the page draw under the iPhone notch / home bar -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0b0f">
+
+  <title>Streamlite</title>
+
+  <!-- PWA: makes the app installable to the iOS home screen -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Streamlite">
+
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <!-- Catalog view -->
+  <main id="catalog-view" class="view">
+    <header class="app-header">
+      <h1>Streamlite</h1>
+    </header>
+    <ul id="catalog" class="catalog" aria-live="polite">
+      <li class="status" id="catalog-status">Cargando…</li>
+    </ul>
+  </main>
+
+  <!-- Player view (hidden until an item is opened) -->
+  <section id="player-view" class="view hidden">
+    <header class="player-header">
+      <button id="back-btn" class="back-btn" aria-label="Volver">‹ Volver</button>
+    </header>
+    <div class="player-body">
+      <div class="artwork">
+        <img src="/icons/icon-512.png" alt="" />
+      </div>
+      <h2 id="player-title" class="now-title"></h2>
+      <p id="player-date" class="now-sub"></p>
+      <!-- Audio element: this is what keeps playing in the background on iOS Safari -->
+      <audio id="player" controls playsinline preload="metadata"></audio>
+    </div>
+  </section>
+
+  <script src="/app.js"></script>
+</body>
+</html>
