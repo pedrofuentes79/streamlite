@@ -1,0 +1,18 @@
+[Unit]
+Description=streamlite media server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=dietpi
+Group=dietpi
+# The repo is cloned to /home/dietpi/streamlite; the binary is built there
+# (go build -o streamlite ./cmd/server). WorkingDirectory must be the repo root so
+# the server finds ./web (static files) and the default ./streamlite.db.
+WorkingDirectory=/home/dietpi/streamlite
+ExecStart=/home/dietpi/streamlite/streamlite -db /home/dietpi/streamlite/streamlite.db
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
