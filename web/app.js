@@ -24,8 +24,12 @@ let lastSaved = -1;      // last progress value sent, to avoid spamming
 
 function fmtDate(iso) {
   try {
+    // The value is a date at UTC midnight (e.g. "2026-05-31T00:00:00Z"); format in
+    // UTC so the calendar day doesn't slip backwards in ART (UTC-3). Weekday + date,
+    // no time — e.g. "domingo, 31 may 2026".
     return new Date(iso).toLocaleDateString("es-ES", {
-      day: "numeric", month: "short", year: "numeric",
+      weekday: "long", day: "numeric", month: "short", year: "numeric",
+      timeZone: "UTC",
     });
   } catch { return iso; }
 }
