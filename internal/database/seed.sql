@@ -1,4 +1,6 @@
--- Test data for local development
+-- Development seed data. NOT part of the schema migrations — only applied when
+-- explicitly requested (server -seed, or the test helper), so production DBs stay
+-- empty. See InitDB's `seed` parameter.
 INSERT OR IGNORE INTO media (date, title, video_path, audio_path, progress_seconds, total_seconds)
 VALUES
     (

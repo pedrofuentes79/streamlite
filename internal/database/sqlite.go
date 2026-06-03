@@ -12,7 +12,13 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-func InitDB(dbPath string, reset bool) *sql.DB {
+//go:embed seed.sql
+var seedScript string
+
+// InitDB opens the database and runs schema migrations. Development seed data is
+// applied only when seed is true (server -seed, or tests) — production DBs stay
+// empty so the catalog isn't polluted with placeholder rows.
+func InitDB(dbPath string, reset, seed bool) *sql.DB {
 	if reset {
 		log.Println("Resetting full db")
 		os.Remove(dbPath)
@@ -27,6 +33,11 @@ func InitDB(dbPath string, reset bool) *sql.DB {
 	}
 
 	runMigrations(db)
+	if seed {
+		if _, err = db.Exec(seedScript); err != nil {
+			log.Fatalf("Failed to apply seed data: %v", err)
+		}
+	}
 	return db
 }
 

@@ -15,9 +15,10 @@ type server struct {
 func main() {
 	dbPath := flag.String("db", "streamlite.db", "Path to the SQLite file")
 	resetDB := flag.Bool("reset", false, "Drop the existing database and re-run migrations from scratch")
+	seedDB := flag.Bool("seed", false, "Insert development seed data (off by default)")
 	flag.Parse()
 
-	s := &server{db: database.InitDB(*dbPath, *resetDB)}
+	s := &server{db: database.InitDB(*dbPath, *resetDB, *seedDB)}
 
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
