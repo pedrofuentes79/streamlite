@@ -16,9 +16,12 @@ const playerTitle = document.getElementById("player-title");
 const playerDate  = document.getElementById("player-date");
 const audio       = document.getElementById("player");
 const backBtn     = document.getElementById("back-btn");
+const chaptersEl  = document.getElementById("chapters");
 
 let current = null;      // { id, title, totalSeconds }
 let lastSaved = -1;      // last progress value sent, to avoid spamming
+let chapters = [];       // [{ start, title }] for the open item (start in seconds)
+let activeChapter = -1;  // index currently highlighted, to avoid redundant DOM work
 
 // ---- Helpers ----
 
@@ -39,6 +42,15 @@ function fmtClock(totalSec) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// Timestamp label for a chapter row: "h:mm:ss" past the first hour, else "m:ss".
+function fmtTimestamp(sec) {
+  const s = Math.max(0, Math.round(sec));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, "0");
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
 }
 
 // ---- Catalog ----
@@ -102,6 +114,7 @@ function openPlayer(m) {
   playerView.classList.remove("hidden");
 
   setupMediaSession(m);
+  loadChapters(m.id);
 
   // Resume where we left off, once the browser knows the duration.
   const resume = () => {
@@ -120,10 +133,63 @@ function closePlayer() {
   audio.removeAttribute("src");
   audio.load();
   current = null;
+  clearChapters();
 
   playerView.classList.add("hidden");
   catalogView.classList.remove("hidden");
   loadCatalog();
+}
+
+// ---- Chapters ----
+
+function clearChapters() {
+  chapters = [];
+  activeChapter = -1;
+  chaptersEl.replaceChildren();
+  chaptersEl.classList.add("hidden");
+}
+
+async function loadChapters(id) {
+  clearChapters();
+  let data;
+  try {
+    const res = await fetch(`/api/chapters/${id}`);
+    if (!res.ok) return;
+    data = await res.json();
+  } catch { return; }
+
+  // The player may have moved on (back / next item) while we awaited.
+  if (!current || current.id !== id) return;
+  if (!Array.isArray(data) || data.length === 0) return;
+
+  chapters = data;
+  const rows = data.map((c, i) => {
+    const li = document.createElement("li");
+    li.className = "chapter";
+    li.innerHTML = `<span class="chapter-time"></span><span class="chapter-title"></span>`;
+    li.querySelector(".chapter-time").textContent = fmtTimestamp(c.start);
+    li.querySelector(".chapter-title").textContent = c.title || `Capítulo ${i + 1}`;
+    li.addEventListener("click", () => { audio.currentTime = c.start; audio.play().catch(() => {}); });
+    return li;
+  });
+  chaptersEl.replaceChildren(...rows);
+  chaptersEl.classList.remove("hidden");
+  highlightChapter();
+}
+
+// Highlight the chapter containing the current playback position.
+function highlightChapter() {
+  if (!chapters.length) return;
+  const t = audio.currentTime;
+  let idx = 0;
+  for (let i = 0; i < chapters.length; i++) {
+    if (chapters[i].start <= t) idx = i; else break;
+  }
+  if (idx === activeChapter) return;
+  const items = chaptersEl.children;
+  if (items[activeChapter]) items[activeChapter].classList.remove("active");
+  if (items[idx]) items[idx].classList.add("active");
+  activeChapter = idx;
 }
 
 // ---- Media Session (lock screen + control center) ----
@@ -207,6 +273,7 @@ audio.addEventListener("play", () => {
 let tick = 0;
 audio.addEventListener("timeupdate", () => {
   updatePositionState();
+  highlightChapter();
   if (audio.currentTime - tick >= 5) {     // throttle saves to ~every 5s
     tick = audio.currentTime;
     saveProgress();

@@ -1,7 +1,7 @@
 -- Development seed data. NOT part of the schema migrations — only applied when
 -- explicitly requested (server -seed, or the test helper), so production DBs stay
 -- empty. See InitDB's `seed` parameter.
-INSERT OR IGNORE INTO media (date, title, video_path, audio_path, progress_seconds, total_seconds)
+INSERT OR IGNORE INTO media (date, title, video_path, audio_path, progress_seconds, total_seconds, chapters)
 VALUES
     (
         '2026-05-18',
@@ -9,7 +9,9 @@ VALUES
         'media_store/crypto_class_1.mp4',
         'media_store/crypto_class_1.m4a',
         450,    -- 7.5 minutes in
-        5400.0  -- 1h30m
+        5400.0, -- 1h30m
+        -- sample chapters to exercise the player's chapter list
+        '[{"start":0,"title":"Intro"},{"start":600,"title":"Hashing"},{"start":1800,"title":"Public-key crypto"},{"start":3600,"title":"Q&A"}]'
     ),
     (
         '2026-05-20',
@@ -17,7 +19,8 @@ VALUES
         'media_store/crypto_class_1.mp4',
         'media_store/crypto_class_1.m4a',
         0,      -- not started
-        7200.0  -- 2 hours
+        7200.0, -- 2 hours
+        '[]'
     ),
     (
         '2026-05-22',
@@ -25,6 +28,7 @@ VALUES
         'media_store/podcast_1.mp4',
         'media_store/podcast_1.mp3',
         3600,   -- halfway
-        7200.0  -- 2 hours
+        7200.0, -- 2 hours
+        '[]'
     )
     ;

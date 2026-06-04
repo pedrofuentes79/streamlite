@@ -5,6 +5,7 @@ import (
 	"embed"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
 )
@@ -53,6 +54,13 @@ func runMigrations(db *sql.DB) {
 			log.Fatalf("Could not read migration file %s: %v", entry.Name(), err)
 		}
 		if _, err = db.Exec(string(script)); err != nil {
+			// Migrations are re-run every boot and must be idempotent. CREATE TABLE
+			// uses IF NOT EXISTS, but SQLite has no ADD COLUMN IF NOT EXISTS, so an
+			// already-applied "ALTER TABLE ... ADD COLUMN" re-fails with this exact
+			// error — tolerate it (and only it).
+			if strings.Contains(err.Error(), "duplicate column name") {
+				continue
+			}
 			log.Fatalf("Failed to execute migration %s: %v", entry.Name(), err)
 		}
 	}

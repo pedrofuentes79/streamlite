@@ -155,3 +155,42 @@ body {
   width: 100%;
   max-width: 360px;
 }
+
+/* ---- Chapters ---- */
+.chapters {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 6px;
+  width: 100%;
+  max-width: 360px;
+  max-height: 38vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
+  border-radius: var(--radius);
+  text-align: left;
+}
+.chapter {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.chapter:active { background: var(--surface-2); }
+.chapter.active { background: var(--surface-2); }
+.chapter.active .chapter-title { color: var(--text); font-weight: 600; }
+.chapter-time {
+  flex: 0 0 auto;
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--accent);
+}
+.chapter-title {
+  font-size: 15px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}

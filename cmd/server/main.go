@@ -27,6 +27,7 @@ func main() {
 	http.HandleFunc("/api/stream/{id}", s.handleStream)
 	http.HandleFunc("/api/audio/{id}", s.handleAudio)
 	http.HandleFunc("/api/progress/{id}", s.handleProgress)
+	http.HandleFunc("/api/chapters/{id}", s.handleChapters)
 
 	log.Println("streamlite running at http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
