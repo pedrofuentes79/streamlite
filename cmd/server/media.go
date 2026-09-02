@@ -15,7 +15,14 @@ type MediaResponse struct {
 }
 
 func (s *server) handleGetCatalog(w http.ResponseWriter, r *http.Request) {
-	rows, err := s.db.Query("SELECT id, title, date, progress_seconds, total_seconds FROM media ORDER BY updated_at DESC LIMIT 10")
+	// Newest broadcast first. `date` is the video's publish date; ordering by
+	// updated_at instead surfaced whatever row the ingest last touched, so the list
+	// reshuffled every time a download landed and a back-filled old episode could
+	// sit at the top. id DESC only breaks ties inside a single day.
+	//
+	// The limit sits comfortably above the downloader's KEEP_LATEST so the catalog
+	// shows the whole library; at LIMIT 10 a 14-episode library hid four of them.
+	rows, err := s.db.Query("SELECT id, title, date, progress_seconds, total_seconds FROM media ORDER BY date DESC, id DESC LIMIT 50")
 	if err != nil {
 		http.Error(w, "Error querying the database", http.StatusInternalServerError)
 		return
